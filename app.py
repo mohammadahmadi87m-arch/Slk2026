@@ -19,7 +19,6 @@ def init_db():
     cursor = conn.cursor()
     
     # ۱. جدول مربیان
-    # تغییر ۱۳ & ۱۷: افزودن فیلدها و حذف کلمه نمادین در منطق
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS coaches (
             login_code TEXT PRIMARY KEY,
@@ -34,7 +33,6 @@ def init_db():
     ''')
     
     # ۲. جدول بازیکنان
-    # تغییر ۴: فیلد card_url برای همه بازیکنان استفاده می‌شود
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -54,7 +52,6 @@ def init_db():
     ''')
     
     # ۴. جدول تیم‌های استاندارد
-    # تغییر ۹: افزودن ستاره و اعتبار مورد نیاز به تیم استاندارد
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_teams (
             id SERIAL PRIMARY KEY,
@@ -66,7 +63,7 @@ def init_db():
         )
     ''')
     
-    # جدول بازیکنان تیم‌های استاندارد (تغییر ۹)
+    # جدول بازیکنان تیم‌های استاندارد
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_players (
             id SERIAL PRIMARY KEY,
@@ -76,7 +73,7 @@ def init_db():
         )
     ''')
     
-    # ۵. جدول مسابقات و ثبت ترکیب‌ها (تغییر ۵ و ۶)
+    # ۵. جدول مسابقات و ثبت ترکیب‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
             id SERIAL PRIMARY KEY,
@@ -92,7 +89,7 @@ def init_db():
         )
     ''')
     
-    # ۶. جدول تورنمنت‌ها (تغییر ۸ - ذخیره عکس‌ها به صورت مستقیم/مالتیپل اسناد Base64)
+    # ۶. جدول تورنمنت‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournaments (
             id SERIAL PRIMARY KEY,
@@ -107,7 +104,7 @@ def init_db():
         )
     ''')
     
-    # ۷. جدول ثبت‌نام تورنمنت‌ها (تغییر ۸ - سیستم تایید/رد وضعیت)
+    # ۷. جدول ثبت‌نام تورنمنت‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournament_regs (
             id SERIAL PRIMARY KEY,
@@ -118,7 +115,7 @@ def init_db():
         )
     ''')
 
-    # ۸. جدول مجوزها و قفل‌ها (تغییر ۱۴ - امکان قفل جزئیات کامل بازی)
+    # ۸. جدول مجوزها و قفل‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS account_permissions (
             account_type TEXT PRIMARY KEY,
@@ -158,7 +155,7 @@ def init_db():
         )
     ''')
 
-    # جدول آیتم‌های شانس برای باکس‌ها (تغییر ۱۱)
+    # جدول آیتم‌های شانس برای باکس‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS box_items (
             id SERIAL PRIMARY KEY,
@@ -168,7 +165,7 @@ def init_db():
         )
     ''')
 
-    # جدول کدهای پیگیری مربیان (تغییر ۱۱)
+    # جدول کدهای پیگیری مربیان
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tracking_codes (
             id SERIAL PRIMARY KEY,
@@ -179,7 +176,7 @@ def init_db():
         )
     ''')
     
-    # پر کردن پیش‌فرض مجوزها
+    # پر کردن پیش‌فرض مجوزها به صورت کاملاً باز (0)
     cursor.execute("SELECT COUNT(*) FROM account_permissions")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO account_permissions VALUES ('رایگان', 0, 0, 0, 0, 0, 0, 0, 0)")
@@ -190,12 +187,10 @@ def init_db():
     cursor.close()
     conn.close()
 
-# تغییر ۲: تابع صدور کد ۶ رقمی ترکیبی از حروف و اعداد انگلیسی
 def generate_mixed_code():
     chars = string.ascii_letters + string.digits
     return ''.join(random.choice(chars) for _ in range(6))
 
-# تغییر ۱۱: تولید کد پیگیری عددی-حروفی تصادفی
 def generate_tracking_code():
     return 'TRK-' + ''.join(random.choice(string.digits + string.ascii_uppercase) for _ in range(8))
 
@@ -392,7 +387,7 @@ HTML_TEMPLATE = """
                                 <option value="table">جدول بازی‌ها</option>
                                 <option value="result">نتایج</option>
                                 <option value="standing">جدول رده‌بندی</option>
-                                <option value="scorer">جدول گلزنان</option>
+                                option value="scorer">جدول گلزنان</option>
                                 <option value="assist">جدول پاس گل‌ها</option>
                                 <option value="cleansheet">جدول کلین شیت‌ها</option>
                             </select>
@@ -425,7 +420,6 @@ HTML_TEMPLATE = """
             </form>
 
             <h3>🏃‍♂️ مدیریت بازیکنان تیم‌های استاندارد</h3>
-            <p style="font-size:11px; color:#cbd5e1;">برای افزودن بازیکن به هر تیم استاندارد و قرار دادن لینک دانلود کارت بازیکن (تغییر ۴ و ۹)، از دکمه زیر استفاده کنید:</p>
             <table>
                 <tr>
                     <th>تیم استاندارد</th>
@@ -445,7 +439,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-locks" class="section">
-            <h3>🔒 قفل یا باز کردن دکمه‌ها و تمام بخش‌ها (تغییر ۱۴)</h3>
+            <h3>🔒 قفل یا باز کردن دکمه‌ها و تمام بخش‌ها</h3>
             <form method="POST" action="/admin/update_permissions">
                 <select name="target_acc">
                     <option value="رایگان">اکانت رایگان</option>
@@ -482,7 +476,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-shop" class="section">
-            <h3>🏪 پنل مدیریت فروشگاه کارتی (تغییر ۱۱)</h3>
+            <h3>🏪 پنل مدیریت فروشگاه کارتی</h3>
             <div style="background:#1e293b; padding:10px; border-radius:6px; margin-bottom:15px;">
                 <h4>➕ افزودن محصول جدید به فروشگاه</h4>
                 <form method="POST" action="/admin/add_product">
@@ -546,10 +540,10 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-tracking" class="section">
-            <h3>🔍 بخش پیگیری کدهای خرید و تراکنش مربیان (تغییر ۱۱)</h3>
+            <h3>🔍 بخش پیگیری کدهای خرید و تراکنش مربیان</h3>
             <form method="POST" action="/admin/search_tracking">
-                <input type="text" name="track_code" placeholder="کد پیگیری را وارد کنید (مثال: TRK-XXXXXXXX)" required>
-                <button type="submit" class="btn">🔎 جستجو در دیتابیس تراکنش‌ها</button>
+                <input type="text" name="track_code" placeholder="کد پیگیری را وارد کنید" required>
+                <button type="submit" class="btn">🔎 جستجو در دیتابیس</button>
             </form>
             {% if track_res %}
                 <div style="background:#1e293b; padding:10px; border-radius:6px; margin-top:10px; text-align:right; border-left:4px solid #22c55e;">
@@ -611,7 +605,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="c-nextmatch" class="section">
-            <h3>📅 بازی‌های آینده برنامه‌ریزی شده و ثبت ترکیب پیشرفته (تغییر ۵)</h3>
+            <h3>📅 بازی‌های آینده برنامه‌ریزی شده و ثبت ترکیب پیشرفته</h3>
             {% for m in matches %}
                 {% if m[5] == 'برگزاری نشده' %}
                 <div style="background:#1e293b; padding:10px; margin-bottom:12px; border-radius:6px; border-left:4px solid #38bdf8;">
@@ -634,8 +628,7 @@ HTML_TEMPLATE = """
                                 <option value="std">۲- بازی با بازیکنان تیم‌های استاندارد</option>
                             </select>
                             
-                            <div id="lineup_players_container_{{ m[0] }}" style="margin-top:5px; max-height:150px; overflow-y:auto; font-size:11px; text-align:right;">
-                                </div>
+                            <div id="lineup_players_container_{{ m[0] }}" style="margin-top:5px; max-height:150px; overflow-y:auto; font-size:11px; text-align:right;"></div>
                             
                             <button type="submit" class="btn" style="font-size:11px; background:#22c55e; width:100%;">💾 ثبت و قفل ترکیب این مسابقه</button>
                         </form>
@@ -646,7 +639,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="c-history" class="section">
-            <h3>📜 نتایج و تاریخچه رسمی بازی‌ها (تغییر ۶)</h3>
+            <h3>📜 نتایج و تاریخچه رسمی بازی‌ها</h3>
             <table>
                 <tr>
                     <th>تورنمنت</th>
@@ -695,7 +688,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="c-standards" class="section">
-            <h3>🌍 تیم‌های استاندارد و بازیکنان فعال فدراسیون (تغییر ۹)</h3>
+            <h3>🌍 تیم‌های استاندارد و بازیکنان فعال فدراسیون</h3>
             {% for st in std_teams %}
                 <div style="background:#1e293b; padding:10px; margin-bottom:8px; border-radius:6px; text-align:right;">
                     <b>🛡️ تیم: {{ st[2] }}</b> | ⭐ درجه: {{ st[4] }} ستاره | 💎 هزینه اعتبار در هر مسابقه: {{ st[3] }} اعتبار<br>
@@ -712,7 +705,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="c-shop" class="section">
-            <h3>🏪 فروشگاه رسمی و بزرگ سوپرلیگ (تغییر ۱۱)</h3>
+            <h3>🏪 فروشگاه رسمی و بزرگ سوپرلیگ</h3>
             <p style="font-size:11px; color:#cbd5e1;">محصول مورد نظر خود را خریداری کرده و در صورت نیاز کد پیگیری دریافت کنید.</p>
             
             {% for p in products %}
@@ -752,43 +745,49 @@ HTML_TEMPLATE = """
 </div>
 
 <script>
-    const code = "{{ code }}";
+    // تغییر ۲: ایمن‌سازی مقادیر برای جلوگیری از کرش جاوااسکریپت در زمان ورود ادمین
+    const code = "{{ code or '' }}";
+    const role = "{{ role }}";
+
     function showSec(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        if(document.getElementById(id)) {
-            document.getElementById(id).classList.add('active');
+        const targetSec = document.getElementById(id);
+        if(targetSec) {
+            targetSec.classList.add('active');
         }
     }
     
-    // واکشی بازیکنان تیم مربی همراه با لینک دانلود کارت (تغییر ۴)
-    if(code && "{{ role }}" === "coach") {
-        fetch('/get_players?code=' + code)
-            .then(res => res.json())
-            .then(data => {
-                const div = document.getElementById('coach-players-list');
-                div.innerHTML = '';
-                if(data.length === 0) div.innerHTML = '<p>هنوز بازیکنی برای تیم شما ثبت نشده است.</p>';
-                data.forEach(p => {
-                    let itemDiv = document.createElement('div');
-                    itemDiv.style.background = '#334155';
-                    itemDiv.style.padding = '8px';
-                    itemDiv.style.margin = '5px 0';
-                    itemDiv.style.borderRadius = '5px';
-                    itemDiv.style.textAlign = 'right';
-                    
-                    let html = "<b>🏃‍♂️ نام بازیکن: " + p.name + "</b>";
-                    if(p.card) {
-                        html += " | <a href='" + p.card + "' target='_blank' style='color:#38bdf8; font-weight:bold;'>📥 دانلود کارت بازیکن</a>";
-                    } else {
-                        html += " | <span style='color:#94a3b8;'>کارت تصویری ندارد</span>";
-                    }
-                    itemDiv.innerHTML = html;
-                    div.appendChild(itemDiv);
-                });
-            });
+    // واکشی بازیکنان تیم مربی همراه با لینک دانلود کارت
+    if(code && role === "coach") {
+        const playerListDiv = document.getElementById('coach-players-list');
+        if(playerListDiv) {
+            fetch('/get_players?code=' + code)
+                .then(res => res.json())
+                .then(data => {
+                    playerListDiv.innerHTML = '';
+                    if(data.length === 0) playerListDiv.innerHTML = '<p>هنوز بازیکنی برای تیم شما ثبت نشده است.</p>';
+                    data.forEach(p => {
+                        let itemDiv = document.createElement('div');
+                        itemDiv.style.background = '#334155';
+                        itemDiv.style.padding = '8px';
+                        itemDiv.style.margin = '5px 0';
+                        itemDiv.style.borderRadius = '5px';
+                        itemDiv.style.textAlign = 'right';
+                        
+                        let html = "<b>🏃‍♂️ نام بازیکن: " + p.name + "</b>";
+                        if(p.card) {
+                            html += " | <a href='" + p.card + "' target='_blank' style='color:#38bdf8; font-weight:bold;'>📥 دانلود کارت بازیکن</a>";
+                        } else {
+                            html += " | <span style='color:#94a3b8;'>کارت تصویری ندارد</span>";
+                        }
+                        itemDiv.innerHTML = html;
+                        playerListDiv.appendChild(itemDiv);
+                    });
+                }).catch(err => console.log("Error fetching players:", err));
+        }
     }
 
-    // تغییر ۵: لود چک باکس بازیکنان برای ثبت ترکیب مسابقه
+    // لود چک باکس بازیکنان برای ثبت ترکیب مسابقه
     function loadLineupPlayers(matchId, coachCode) {
         var src = document.getElementById('lineup_src_' + matchId).value;
         var container = document.getElementById('lineup_players_container_' + matchId);
@@ -810,7 +809,7 @@ HTML_TEMPLATE = """
             });
     }
 
-    // تغییر ۹: لود بازیکنان تیم‌های استاندارد
+    // لود بازیکنان تیم‌های استاندارد
     function loadStdPlayersList(teamId) {
         var div = document.getElementById('std_p_list_' + teamId);
         if(div.style.display === 'block') { div.style.display = 'none'; return; }
@@ -836,13 +835,12 @@ HTML_TEMPLATE = """
             });
     }
 
-    // تغییر ۱۱: عملیات خرید هوشمند فروشگاه همراه با صدور کد پیگیری
+    // عملیات خرید هوشمند فروشگاه همراه با صدور کد پیگیری
     function buyProductAction(productId, saleType) {
         var out = document.getElementById('shop_output_' + productId);
         out.innerHTML = '';
         
         if(saleType === '2') {
-            // پولی قطعی
             var method = prompt("نوع پرداخت را انتخاب کنید:\n1- پرداخت مستقیم از تلگرام\n2- پرداخت از موجودی کیف پول فدراسیون\n(عدد 1 یا 2 را وارد کنید)");
             if(method === '1') {
                 alert("آیدی تلگرام من برای خرید مستقیم و پرداخت هزینه: @Mamad13287\nلطفا پیام دهید تا محصول فعال گردد.");
@@ -852,7 +850,6 @@ HTML_TEMPLATE = """
             }
         }
         
-        // ارسال درخواست خرید به سرور
         fetch('/execute_purchase', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -953,7 +950,6 @@ def login():
     conn.close()
     return render_template_string(HTML_TEMPLATE, role="none", error="❌ کد ورود یا رمز عبور نامعتبر است.")
 
-# تغییر ۲: ایجاد مربی با کد ۶ رقمی ترکیبی از حروف و عدد
 @app.route('/admin/create_team', methods=['POST'])
 def admin_create_team():
     t_name = request.form.get('t_name', '').strip()
@@ -966,7 +962,6 @@ def admin_create_team():
     conn.close()
     return f"<h3>تیم ساخته شد! کد ۶ رقمی ترکیبی مربی: <b style='color:cyan;'>{code}</b></h3><br><a href='/'>بازگشت به پنل مدیریت</a>"
 
-# تغییر ۱۳: ویرایش پیشرفته اطلاعات مربی شامل کیف پول و تعداد کارت نقل و انتقالات
 @app.route('/admin/update_coach', methods=['POST'])
 def admin_update_coach():
     code = request.form.get('code')
@@ -984,7 +979,6 @@ def admin_update_coach():
     conn.close()
     return "<h3>داشبورد مربی با موفقیت بروزرسانی شد.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۷: قرار دادن متن افتخارات
 @app.route('/admin/update_honors', methods=['POST'])
 def admin_update_honors():
     code = request.form.get('code')
@@ -997,7 +991,6 @@ def admin_update_honors():
     conn.close()
     return "<h3>افتخارات مربی بروزرسانی شد.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۳ & ۴: مدیریت بازیکنان هر تیم توسط مدیر
 @app.route('/admin/manage_players/<code>')
 def admin_manage_players(code):
     conn = get_db_connection()
@@ -1018,7 +1011,7 @@ def admin_manage_players(code):
         <form method="POST" action="/admin/add_player_to_team">
             <input type="hidden" name="code" value="{code}">
             <input type="text" name="p_name" placeholder="نام بازیکن جدید" required><br>
-            <input type="text" name="card_url" placeholder="لینک دانلود کارت بازیکن (تغییر ۴)"><br><br>
+            <input type="text" name="card_url" placeholder="لینک دانلود کارت بازیکن"><br><br>
             <button type="submit" style="background:#22c55e; color:white; padding:5px 10px;">افزودن</button>
         </form>
         <hr>
@@ -1100,7 +1093,6 @@ def get_players():
     conn.close()
     return jsonify([{"name": r[0], "card": r[1]} for r in rows])
 
-# تغییر ۵: دریافت بازیکنان برای ثبت ترکیب به صورت چک‌باکس
 @app.route('/get_lineup_players')
 def get_lineup_players():
     src = request.args.get('src')
@@ -1152,7 +1144,6 @@ def coach_submit_lineup():
     conn.close()
     return "<h3>✅ ترکیب ۷ نفره شما با موفقیت ثبت شد و در اختیار داور/مدیر قرار گرفت.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۱۰: رفع باگ و ثبت رسمی پیام نقل و انتقالات در جدول لاگ‌ها
 @app.route('/submit_transfer', methods=['POST'])
 def submit_transfer():
     data = request.json
@@ -1192,7 +1183,6 @@ def submit_result():
     res = request.form.get('res_text').strip()
     conn = get_db_connection()
     cursor = conn.cursor()
-    # تغییر ۶: نتیجه نهایی بازی آپدیت می‌شود و در بخش تاریخچه دو تیم به صورت خودکار قابل رویت است.
     cursor.execute("UPDATE matches SET result=%s WHERE id=%s", (res, m_id))
     conn.commit()
     cursor.close()
@@ -1210,7 +1200,6 @@ def create_tournament():
     conn.close()
     return "<h3>تورنمنت ایجاد و بخش ثبت نام باز شد.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۸: تایید یا رد ثبت‌نام تورنمنت
 @app.route('/reg_tournament', methods=['POST'])
 def reg_tournament():
     data = request.json
@@ -1249,7 +1238,6 @@ def admin_reject_reg(reg_id):
     conn.close()
     return redirect('/')
 
-# تغییر ۸: بستن ثبت‌نام، شروع تورنمنت و ساخت بخش مدیریت جداول مسابقات
 @app.route('/admin/start_tournament/<t_id>')
 def admin_start_tournament(t_id):
     conn = get_db_connection()
@@ -1261,7 +1249,6 @@ def admin_start_tournament(t_id):
     conn.close()
     return "<h3>تورنمنت با موفقیت آغاز شد و ثبت نام های غیرمجاز حذف شدند.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۸: آپلود مستقیم و چندگانه تصاویر بخش‌های مختلف تورنمنت فعال به صورت Base64
 @app.route('/admin/upload_tour_media', methods=['POST'])
 def admin_upload_tour_media():
     t_id = request.form.get('t_id')
@@ -1301,7 +1288,6 @@ def admin_upload_tour_media():
     conn.close()
     return "<h3>تصاویر بخش مربوطه با موفقیت به صورت مستقیم آپلود و ذخیره شدند.</h3><br><a href='/'>بازگشت</a>"
 
-# افزودن لیگ استاندارد
 @app.route('/admin/add_std_league', methods=['POST'])
 def add_std_league():
     name = request.form.get('l_name').strip()
@@ -1313,7 +1299,6 @@ def add_std_league():
     conn.close()
     return "<h3>لیگ استاندارد جدید ساخته شد.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۹: ثبت تیم استاندارد با تعداد ستاره و اعتبار مورد نیاز
 @app.route('/admin/add_std_team', methods=['POST'])
 def add_std_team():
     l_id = int(request.form.get('l_id'))
@@ -1329,7 +1314,6 @@ def add_std_team():
     conn.close()
     return "<h3>تیم استاندارد با موفقیت ثبت شد.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۹: مدیریت جداگانه بازیکنان تیم‌های استاندارد همراه با لینک کارت (تغییر ۴)
 @app.route('/admin/manage_std_players/<team_id>')
 def admin_manage_std_players(team_id):
     conn = get_db_connection()
@@ -1349,7 +1333,7 @@ def admin_manage_std_players(team_id):
         <h3>➕ ایجاد و افزودن بازیکن جدید</h3>
         <form method="POST" action="/admin/add_std_player_action">
             <input type="hidden" name="team_id" value="{team_id}">
-            <input type="text" name="p_name" placeholder="نام بازیکن (مثال: وینیسیوس)" required><br>
+            <input type="text" name="p_name" placeholder="نام بازیکن" required><br>
             <input type="text" name="card_url" placeholder="لینک دانلود کارت بازیکن"><br><br>
             <button type="submit" style="background:#22c55e; color:white; padding:6px 12px;">انجام و ثبت بازیکن</button>
         </form>
@@ -1396,7 +1380,6 @@ def get_std_players():
     conn.close()
     return jsonify([{"name": r[0], "card": r[1]} for r in rows])
 
-# تغییر ۱۴: اعمال قفل‌های همه‌جانبه برای تمام بخش‌های بازی
 @app.route('/admin/update_permissions', methods=['POST'])
 def update_permissions():
     target = request.form.get('target_acc')
@@ -1422,7 +1405,6 @@ def update_permissions():
     conn.close()
     return "<h3>قفل‌های سراسری با موفقیت بر روی تمام سطوح اکانت اعمال شدند.</h3><br><a href='/'>بازگشت</a>"
 
-# تغییر ۱۱: مدیریت پیشرفته فروشگاه کارتی - افزودن محصول
 @app.route('/admin/add_product', methods=['POST'])
 def admin_add_product():
     name = request.form.get('p_name').strip()
@@ -1446,7 +1428,6 @@ def admin_add_product():
     conn.close()
     return "<h3>محصول جدید با موفقیت ایجاد و روانه فروشگاه شد.</h3><br><a href='/'>بازگشت</a>"
 
-# مدیریت باکس‌های شانسی و وزن گردونه‌ها
 @app.route('/admin/manage_box/<p_id>')
 def admin_manage_box(p_id):
     conn = get_db_connection()
@@ -1508,7 +1489,6 @@ def admin_delete_product(p_id):
     conn.close()
     return redirect('/')
 
-# تغییر ۱۱: روت پیشرفته و هوشمند پردازش سبد خرید و گردونه باکس شانسی واقعی
 @app.route('/execute_purchase', methods=['POST'])
 def execute_purchase():
     data = request.json
@@ -1534,14 +1514,12 @@ def execute_purchase():
     track_code = generate_tracking_code()
     details = ""
     
-    # نوع اول: خرید قطعی با سکه
     if s_type == '1':
         if coach[2] < p_coins:
             cursor.close()
             conn.close()
-            return jsonify({"success": False, "msg": "سکه شما برای خرید این پک کافی نیست!"})
+            return jsonify({"success": False, "msg": "سکه شما کافی نیست!"})
         
-        # کسر قیمت و افزودن پاداش‌ها
         new_coins = coach[2] - p_coins + r_coins
         new_credit = coach[3] + r_credit
         new_transfers = coach[4] + r_transfers
@@ -1553,14 +1531,13 @@ def execute_purchase():
                 if pl.strip():
                     cursor.execute("INSERT INTO players (team_code, player_name) VALUES (%s, %s)", (code, pl.strip()))
                     
-        details = f"خرید قطعی پک با کسر {p_coins} سکه. هدایا: سکه+{r_coins}، اعتبار+{r_credit}، کارت نقل و انتقال+{r_transfers}، بازیکنان: {r_players}"
+        details = f"خرید قطعی پک با کسر {p_coins} سکه. هدایا: سکه+{r_coins}، اعتبار+{r_credit}، کارت نقل و انتقال+{r_transfers}"
 
-    # نوع دوم: خرید قطعی پولی از طریق کسر موجودی کیف پول فدراسیون
     elif s_type == '2':
         if coach[5] < p_money:
             cursor.close()
             conn.close()
-            return jsonify({"success": False, "msg": "موجودی کیف پول شما کافی نیست! لطفاً حساب خود را شارژ کنید."})
+            return jsonify({"success": False, "msg": "موجودی کیف پول شما کافی نیست!"})
             
         new_wallet = coach[5] - p_money
         new_coins = coach[2] + r_coins
@@ -1574,23 +1551,21 @@ def execute_purchase():
                 if pl.strip():
                     cursor.execute("INSERT INTO players (team_code, player_name) VALUES (%s, %s)", (code, pl.strip()))
                     
-        details = f"خرید پولی از کیف پول با کسر {p_money} تومان. هدایا: سکه+{r_coins}، اعتبار+{r_credit}، کارت نقل و انتقال+{r_transfers}، بازیکنان: {r_players}"
+        details = f"خرید پولی با کسر {p_money} تومان. هدایا: سکه+{r_coins}، اعتبار+{r_credit}"
 
-    # نوع سوم: باکس شانسی گردونه واقعی با رعایت دقیق شانس‌ها و سیستم رندومایز
     elif s_type == '3':
         if coach[2] < p_coins:
             cursor.close()
             conn.close()
-            return jsonify({"success": False, "msg": "سکه شما برای چرخاندن این باکس کافی نیست!"})
+            return jsonify({"success": False, "msg": "سکه شما کافی نیست!"})
             
         cursor.execute("SELECT player_name, chance_weight FROM box_items WHERE product_id=%s", (p_id,))
         box_items = cursor.fetchall()
         if not box_items:
             cursor.close()
             conn.close()
-            return jsonify({"success": False, "msg": "این باکس در حال حاضر خالی است!"})
+            return jsonify({"success": False, "msg": "این باکس خالی است!"})
             
-        # ساخت سیستم انتخاب بر اساس وزن شانس‌ها
         pool = []
         for item in box_items:
             name, weight = item[0], item[1]
@@ -1599,14 +1574,12 @@ def execute_purchase():
                 
         winner_player = random.choice(pool)
         
-        # کسر سکه و اضافه کردن بازیکن برنده
         new_coins = coach[2] - p_coins
         cursor.execute("UPDATE coaches SET coins=%s WHERE login_code=%s", (new_coins, code))
         cursor.execute("INSERT INTO players (team_code, player_name) VALUES (%s, %s)", (code, winner_player))
         
-        details = f"چرخاندن باکس شانسی با هزینه {p_coins} سکه. بازیکن برنده تصادفی: {winner_player}"
+        details = f"باکس شانسی با هزینه {p_coins} سکه. برنده: {winner_player}"
         
-    # ثبت در جدول کدهای پیگیری جهت بررسی ادمین
     cursor.execute("INSERT INTO tracking_codes (tracking_code, team_name, product_name, details) VALUES (%s, %s, %s, %s)", (track_code, coach[1], p_name, details))
     cursor.execute("INSERT INTO admin_logs (team_name, log_type, message) VALUES (%s, 'فروشگاه', %s)", (coach[1], f"کد تراکنش {track_code}: {details}"))
     
@@ -1615,7 +1588,6 @@ def execute_purchase():
     conn.close()
     return jsonify({"success": True, "track_code": track_code, "msg": details})
 
-# پیگیری تراکنش‌ها توسط مدیریت
 @app.route('/admin/search_tracking', methods=['POST'])
 def admin_search_tracking():
     t_code = request.form.get('track_code').strip()
