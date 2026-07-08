@@ -6,7 +6,7 @@ from flask import Flask, request, render_template_string, jsonify, redirect
 app = Flask(__name__)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-ADMIN_PASSWORD = "admin"  # رمز ورود مدیریت شما
+ADMIN_PASSWORD = "admin"  # رمز ورود مدیریت شما با حروف کوچک
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
@@ -15,6 +15,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # ۱. جدول مربیان
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS coaches (
             login_code TEXT PRIMARY KEY,
@@ -28,6 +29,7 @@ def init_db():
         )
     ''')
     
+    # ۲. جدول بازیکنان
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -38,6 +40,7 @@ def init_db():
         )
     ''')
     
+    # ۳. جدول لیگ‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_leagues (
             id SERIAL PRIMARY KEY,
@@ -45,6 +48,7 @@ def init_db():
         )
     ''')
     
+    # ۴. جدول تیم‌های استاندارد
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_teams (
             id SERIAL PRIMARY KEY,
@@ -56,6 +60,7 @@ def init_db():
         )
     ''')
     
+    # ۵. جدول مسابقات
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
             id SERIAL PRIMARY KEY,
@@ -68,6 +73,7 @@ def init_db():
         )
     ''')
     
+    # ۶. جدول تورنمنت‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournaments (
             id SERIAL PRIMARY KEY,
@@ -77,6 +83,7 @@ def init_db():
         )
     ''')
     
+    # ۷. جدول ثبت‌نام تورنمنت‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournament_regs (
             id SERIAL PRIMARY KEY,
@@ -85,6 +92,7 @@ def init_db():
         )
     ''')
 
+    # ۸. جدول مجوزها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS account_permissions (
             account_type TEXT PRIMARY KEY,
@@ -94,6 +102,7 @@ def init_db():
         )
     ''')
     
+    # ۹. جدول لاگ‌ها و پیام‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS admin_logs (
             id SERIAL PRIMARY KEY,
@@ -103,6 +112,7 @@ def init_db():
         )
     ''')
     
+    # پر کردن پیش‌فرض مجوزها
     cursor.execute("SELECT COUNT(*) FROM account_permissions")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO account_permissions VALUES ('رایگان', 0, 0, 0)")
@@ -500,6 +510,11 @@ def index():
 
 @app.route('/login', methods=['POST'])
 def login():
+    try:
+        init_db()  # دیتابیس را مجبور می‌کند قبل از ورود حتما جدول‌ها را بسازد
+    except Exception as e:
+        pass
+        
     code = request.form.get('code', '').strip()
     if code == ADMIN_PASSWORD:
         conn = get_db_connection()
@@ -718,7 +733,9 @@ def reg_tournament():
     return jsonify({"msg": "✅ درخواست ثبت نام در تورنمنت ارسال گردید."})
 
 if __name__ == '__main__':
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        pass
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-    
