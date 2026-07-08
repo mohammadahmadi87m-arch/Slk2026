@@ -1,24 +1,20 @@
 import os
 import random
-import psycopg2  # برای دیتابیس جدید تغییر کرد
+import psycopg2
 from flask import Flask, request, render_template_string, jsonify, redirect
 
 app = Flask(__name__)
 
-# خواندن لینک دیتابیس از تنظیمات رندر
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
 ADMIN_PASSWORD = "admin"  # رمز ورود مدیریت شما
 
 def get_db_connection():
-    # اتصال به دیتابیس ابری
     return psycopg2.connect(DATABASE_URL)
 
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # ۱. جدول مربیان و مشخصات مالی/اکانت
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS coaches (
             login_code TEXT PRIMARY KEY,
@@ -32,7 +28,6 @@ def init_db():
         )
     ''')
     
-    # ۲. جدول بازیکنان مربیان
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -43,13 +38,13 @@ def init_db():
         )
     ''')
     
-    # ۳. جدول لیگ‌ها و تیم‌های استاندارد
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_leagues (
             id SERIAL PRIMARY KEY,
             league_name TEXT
         )
     ''')
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_teams (
             id SERIAL PRIMARY KEY,
@@ -61,7 +56,6 @@ def init_db():
         )
     ''')
     
-    # ۴. جدول بازی‌ها و نتایج
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
             id SERIAL PRIMARY KEY,
@@ -74,7 +68,6 @@ def init_db():
         )
     ''')
     
-    # ۵. جدول تورنمنت‌ها و ثبت‌نام‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournaments (
             id SERIAL PRIMARY KEY,
@@ -83,6 +76,7 @@ def init_db():
             stats_image TEXT DEFAULT ''
         )
     ''')
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournament_regs (
             id SERIAL PRIMARY KEY,
@@ -91,7 +85,6 @@ def init_db():
         )
     ''')
 
-    # ۶. جدول قفل دسترسی اکانت‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS account_permissions (
             account_type TEXT PRIMARY KEY,
@@ -101,7 +94,6 @@ def init_db():
         )
     ''')
     
-    # ۷. جدول لاگ‌ها و پیام‌های نقل و انتقالات
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS admin_logs (
             id SERIAL PRIMARY KEY,
@@ -111,7 +103,6 @@ def init_db():
         )
     ''')
     
-    # پر کردن پیش‌فرض مجوزها در صورت خالی بودن
     cursor.execute("SELECT COUNT(*) FROM account_permissions")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO account_permissions VALUES ('رایگان', 0, 0, 0)")
@@ -122,14 +113,12 @@ def init_db():
     cursor.close()
     conn.close()
 
-# دیتای پیش‌فرض شانس باکس‌ها
 LUCKY_BOX_PLAYERS = [
     {"name": "امباپه", "chance": 20, "rarity": "پک ویژه (۲۰٪ شانس)"},
     {"name": "وینیسیوس", "chance": 30, "rarity": "نرمال (۳۰٪ شانس)"},
     {"name": "یک بازیکن لیگ داخلی", "chance": 50, "rarity": "معمولی (۵۰٪ شانس)"}
 ]
 
-# --- ساختار قالب فرانت‌اند سایت ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -505,8 +494,6 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# ================= مسیرهای بک‌اند =================
-
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE, role="none", error=None)
@@ -576,11 +563,11 @@ def admin_update_coach():
     conn.close()
     return "<h3>داشبورد مربی بروزرسانی شد.</h3><br><a href='/'>بازگشت</a>"
 
-@app.route('/admin/delete_team/<codeextend>')
-def admin_delete_team(codeextend):
+@app.route('/admin/delete_team/<code>')
+def admin_delete_team(code):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM coaches WHERE login_code = %s", (codeextend,))
+    cursor.execute("DELETE FROM coaches WHERE login_code = %s", (code,))
     conn.commit()
     cursor.close()
     conn.close()
@@ -734,3 +721,4 @@ if __name__ == '__main__':
     init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+    
