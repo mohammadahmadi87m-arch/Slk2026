@@ -16,7 +16,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # ۱- جدول مربیان
+    # ایجاد جدول‌ها در صورت عدم وجود
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS coaches (
             login_code TEXT PRIMARY KEY,
@@ -30,7 +30,6 @@ def init_db():
         )
     ''')
     
-    # ۲- جدول بازیکنان همراه با لینک دانلود کارت (مورد ۴)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -42,7 +41,6 @@ def init_db():
         )
     ''')
     
-    # ۳- جدول لیگ‌ها
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_leagues (
             id SERIAL PRIMARY KEY,
@@ -50,7 +48,6 @@ def init_db():
         )
     ''')
     
-    # ۴- جدول تیم‌های استاندارد (مورد ۹)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_teams (
             id SERIAL PRIMARY KEY,
@@ -62,7 +59,6 @@ def init_db():
         )
     ''')
     
-    # ۵- جدول بازیکنان استاندارد (مورد ۹)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS standard_players (
             id SERIAL PRIMARY KEY,
@@ -72,7 +68,6 @@ def init_db():
         )
     ''')
     
-    # ۶- جدول مسابقات (مورد ۵)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
             id SERIAL PRIMARY KEY,
@@ -86,7 +81,6 @@ def init_db():
         )
     ''')
     
-    # ۷- جدول تورنمنت‌ها (مورد ۸)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournaments (
             id SERIAL PRIMARY KEY,
@@ -101,7 +95,6 @@ def init_db():
         )
     ''')
     
-    # ۸- جدول ثبت نام و تایید مربیان (مورد ۸)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tournament_regs (
             id SERIAL PRIMARY KEY,
@@ -111,7 +104,6 @@ def init_db():
         )
     ''')
 
-    # ۹- جدول مجوزها و قفل‌های پیشرفته (مورد ۱۴)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS account_permissions (
             account_type TEXT PRIMARY KEY,
@@ -128,7 +120,6 @@ def init_db():
         )
     ''')
     
-    # ۱۰- جدول لاگ‌ها و پیام‌های نقل و انتقالات (مورد ۱۰)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS admin_logs (
             id SERIAL PRIMARY KEY,
@@ -138,7 +129,6 @@ def init_db():
         )
     ''')
 
-    # ۱۱- جدول محصولات فروشگاه (مورد ۱۱)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS shop_products (
             id SERIAL PRIMARY KEY,
@@ -151,7 +141,6 @@ def init_db():
         )
     ''')
 
-    # ۱۲- جدول آیتم‌های باکس شانسی (مورد ۱۱)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS box_items (
             id SERIAL PRIMARY KEY,
@@ -161,7 +150,6 @@ def init_db():
         )
     ''')
 
-    # ۱۳- جدول کدهای پیگیری فروشگاه (مورد ۱۱)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS shop_orders (
             id SERIAL PRIMARY KEY,
@@ -172,7 +160,6 @@ def init_db():
         )
     ''')
 
-    # ۱۴- جدول ترکیب تیم‌ها (مورد ۵)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS match_lineups (
             id SERIAL PRIMARY KEY,
@@ -183,7 +170,6 @@ def init_db():
         )
     ''')
 
-    # ۱۵- جدول کدهای هدیه (مورد ۱۸)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gift_codes (
             code TEXT PRIMARY KEY,
@@ -191,7 +177,28 @@ def init_db():
             reward_value TEXT
         )
     ''')
-    
+
+    # سیستم هوشمند بررسی و ارتقای ستون‌ها برای جلوگیری از خطای ۵۰۰ رندر
+    columns_to_add = [
+        ("coaches", "transfer_cards", "INTEGER DEFAULT 2"),
+        ("coaches", "wallet", "INTEGER DEFAULT 0"),
+        ("coaches", "honors", "TEXT DEFAULT 'هنوز افتخاری ثبت نشده است.'"),
+        ("players", "download_url", "TEXT DEFAULT ''"),
+        ("matches", "allow_own_team", "INTEGER DEFAULT 1"),
+        ("tournaments", "stats_images", "TEXT DEFAULT ''"),
+        ("tournaments", "results_images", "TEXT DEFAULT ''"),
+        ("tournaments", "standings_images", "TEXT DEFAULT ''"),
+        ("tournaments", "scorers_images", "TEXT DEFAULT ''"),
+        ("tournaments", "assists_images", "TEXT DEFAULT ''"),
+        ("tournaments", "cleansheets_images", "TEXT DEFAULT ''"),
+    ]
+
+    for table, col, col_type in columns_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type};")
+        except:
+            conn.rollback() # اگر ستون از قبل بود، ارور نده و رد شو
+
     cursor.execute("SELECT COUNT(*) FROM account_permissions")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO account_permissions VALUES ('رایگان', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)")
@@ -203,7 +210,6 @@ def init_db():
     conn.close()
 
 def generate_mix_code():
-    # ۲- تولید کد ۶ رقمی ترکیبی عدد و حروف انگلیسی بزرگ و کوچک
     chars = string.ascii_letters + string.digits
     return ''.join(random.choice(chars) for _ in range(6))
 
@@ -364,7 +370,7 @@ HTML_TEMPLATE = """
                     <th>بازی</th>
                     <th>وضعیت مجاز</th>
                     <th>ترکیب‌های ثبت شده</th>
-                    <th>ثبت نتیجه (مورد ۶)</th>
+                    <th>ثبت نتیجه</th>
                 </tr>
                 {% for m in matches %}
                 <tr>
@@ -396,7 +402,7 @@ HTML_TEMPLATE = """
                 <button type="submit" class="btn">ایجاد تورنمنت</button>
             </form>
 
-            <h3>👥 مدیریت ثبت‌نام‌ها و آپلود عکس پیشرفته (مورد ۸)</h3>
+            <h3>👥 مدیریت ثبت‌نام‌ها و عکس‌ها</h3>
             {% for t in tours %}
             <div style="background:#1e293b; padding:10px; margin-bottom:10px; border-radius:6px; text-align:right;">
                 <h4>🏆 تورنمنت: {{ t[1] }} (وضعیت: {{ t[2] }})</h4>
@@ -438,7 +444,7 @@ HTML_TEMPLATE = """
                 <button type="submit" class="btn">ایجاد لیگ</button>
             </form>
 
-            <h3>🛡️ ثبت تیم استاندارد داخل لیگ (مورد ۹)</h3>
+            <h3>🛡️ ثبت تیم استاندارد داخل لیگ</h3>
             <form method="POST" action="/admin/add_std_team">
                 <select name="l_id">
                     {% for l in std_leagues %}
@@ -465,7 +471,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-shop" class="section">
-            <h3>🏪 افزودن محصول جدید به فروشگاه (مورد ۱۱)</h3>
+            <h3>🏪 افزودن محصول جدید به فروشگاه</h3>
             <form method="POST" action="/admin/add_product">
                 <input type="text" name="p_name" placeholder="نام محصول" required>
                 
@@ -486,7 +492,7 @@ HTML_TEMPLATE = """
                 </div>
 
                 <div id="shop_box_div" style="display:none;">
-                    <p><b>اضافه کردن یک آیتم برای باکس شانسی (بعد از ساخت محصول نیز می‌توانید باز اضافه کنید):</b></p>
+                    <p><b>آیتم باکس شانسی:</b></p>
                     <input type="text" name="b_player" placeholder="نام بازیکن باکس"><br>
                     شانس خروج (۱ تا ۱۰): <input type="number" name="b_chance" min="1" max="10" placeholder="۱۰ بیشترین شانس">
                 </div>
@@ -528,7 +534,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-gifts" class="section">
-            <h3>🎁 تعریف کد هدیه جدید (مورد ۱۸)</h3>
+            <h3>🎁 تعریف کد هدیه جدید</h3>
             <form method="POST" action="/admin/add_gift">
                 <input type="text" name="g_code" placeholder="کد هدیه (مثال: GIFT2026)" required>
                 <select name="g_type">
@@ -543,7 +549,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-locks" class="section">
-            <h3>🔒 مدیریت قفل و محدودیت‌های بازی (مورد ۱۴)</h3>
+            <h3>🔒 مدیریت قفل و محدودیت‌های بازی</h3>
             <form method="POST" action="/admin/update_permissions">
                 <select name="target_acc">
                     <option value="رایگان">اکانت رایگان</option>
@@ -561,7 +567,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div id="adm-transfers" class="section">
-            <h3>📩 پیام‌های دریافتی مربیان (مورد ۱۰ - اصلاح شده)</h3>
+            <h3>📩 پیام‌های دریافتی مربیان</h3>
             {% for log in logs %}
                 <div style="background:#1e293b; padding:8px; margin:4px 0; border-right:4px solid #38bdf8; text-align:right;">
                     <b>نوع پیام: {{ log[1] }} | فرستنده: {{ log[0] }}</b><br>
@@ -575,7 +581,8 @@ HTML_TEMPLATE = """
         
         <div class="status-card">
             🪙 موجودی سکه: <b>{{ data[2] }}</b> | 💎 اعتبار: <b>{{ data[3] }}</b><br>
-            🔄 کارت نقل و انتقالات: <b>{{ data[4] }}</b> | 💳 کیف پول: <b>{{ data[5] }} تومان</b><br> 🎖️ نوع اکانت شما: <span style="color:#38bdf8; font-weight:bold;">{{ data[6] }}</span>
+            🔄 کارت نقل و انتقالات: <b>{{ data[4] }}</b> | 💳 کیف پول: <b>{{ data[5] }} تومان</b><br>
+            🎖️ نوع اکانت شما: <span style="color:#38bdf8; font-weight:bold;">{{ data[6] }}</span>
         </div>
 
         <div class="grid-menu">
@@ -597,7 +604,7 @@ HTML_TEMPLATE = """
             <table>
                 <tr>
                     <th>نام بازیکن</th>
-                    <th>کارت بازیکن (مورد ۴)</th>
+                    <th>کارت بازیکن</th>
                 </tr>
                 {% for p in coach_players %}
                 <tr>
@@ -756,12 +763,6 @@ HTML_TEMPLATE = """
                 {% endif %}
             </div>
             {% endfor %}
-
-            {% if track_msg %}
-                <div style="background:green; padding:10px; margin-top:8px; border-radius:5px;">
-                    🎉 {{ track_msg }}
-                </div>
-            {% endif %}
         </div>
 
         <div id="c-gifts" class="section">
@@ -776,7 +777,6 @@ HTML_TEMPLATE = """
         <div id="c-contact" class="section">
             <h3>📞 پل‌های ارتباطی با فدراسیون</h3>
             <p style="font-size:18px; color:#38bdf8; font-weight:bold;">🆔 آیدی تلگرام مدیریت سوپرلیگ: @Mamad13287</p>
-            <p style="font-size:12px; color:#94a3b8;">جهت گزارش مشکلات، کدهای پیگیری مالی و هماهنگی مسابقات پیام دهید.</p>
         </div>
     {% endif %}
 
@@ -804,14 +804,14 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def index():
-    return render_template_string(HTML_TEMPLATE, role="none", error=None)
-
-@app.route('/login', methods=['POST'])
-def login():
     try:
         init_db()
     except:
         pass
+    return render_template_string(HTML_TEMPLATE, role="none", error=None)
+
+@app.route('/login', methods=['POST'])
+def login():
     code = request.form.get('code', '').strip()
     if code == ADMIN_PASSWORD:
         return reload_admin_dashboard()
@@ -873,7 +873,7 @@ def reload_admin_dashboard(order_search=None):
 @app.route('/admin/create_team', methods=['POST'])
 def admin_create_team():
     t_name = request.form.get('t_name', '').strip()
-    code = generate_mix_code() # ۲- اختصاص کد ترکیبی عدد و حروف
+    code = generate_mix_code()
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO coaches (login_code, team_name) VALUES (%s, %s)", (code, t_name))
@@ -888,8 +888,8 @@ def admin_update_coach():
     acc_type = request.form.get('acc_type')
     coins = int(request.form.get('u_coins'))
     credit = int(request.form.get('u_credit'))
-    t_cards = int(request.form.get('u_trans_cards')) # ۱۳- افزودن کارت نقل و انتقال
-    wallet = int(request.form.get('u_wallet')) # ۱۳- افزودن مقدار کیف پول
+    t_cards = int(request.form.get('u_trans_cards'))
+    wallet = int(request.form.get('u_wallet'))
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -901,7 +901,6 @@ def admin_update_coach():
 
 @app.route('/admin/add_honors', methods=['POST'])
 def admin_add_honors():
-    # ۷- افزودن متن تالار افتخارات مربی توسط مدیر
     code = request.form.get('code')
     txt = request.form.get('honors_text')
     conn = get_db_connection()
@@ -914,7 +913,6 @@ def admin_add_honors():
 
 @app.route('/admin/add_player_to_team', methods=['POST'])
 def admin_add_player_to_team():
-    # ۳ و ۴- افزودن بازیکن جدید و لینک دانلود کارت توسط مدیر فدراسیون
     p_name = request.form.get('p_name')
     dl_url = request.form.get('dl_url')
     t_code = request.form.get('t_code')
@@ -928,7 +926,6 @@ def admin_add_player_to_team():
 
 @app.route('/admin/edit_player_details', methods=['POST'])
 def admin_edit_player_details():
-    # ۳ و ۴- ویرایش نام بازیکن و لینک دانلود کارت
     p_id = request.form.get('p_id')
     new_name = request.form.get('new_name')
     new_dl = request.form.get('new_dl')
@@ -942,7 +939,6 @@ def admin_edit_player_details():
 
 @app.route('/admin/delete_player/<p_id>')
 def admin_delete_player(p_id):
-    # ۳- حذف بازیکن توسط مدیر
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM players WHERE id=%s", (p_id,))
@@ -957,7 +953,7 @@ def admin_create_match():
     t_b = request.form.get('t_b')
     t_name = request.form.get('tour_name')
     desc = request.form.get('desc')
-    allow_own = 1 if request.form.get('allow_own') else 0 # ۵- مشخص کردن امکان بازی با تیم خود
+    allow_own = 1 if request.form.get('allow_own') else 0
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO matches (team_a, team_b, tournament_name, description, allow_own_team) VALUES (%s, %s, %s, %s, %s)", (t_a, t_b, t_name, desc, allow_own))
@@ -968,7 +964,6 @@ def admin_create_match():
 
 @app.route('/admin/submit_result', methods=['POST'])
 def submit_result():
-    # ۶- نتایج بازی ثبت شده توسط مدیر مستقیماً به بخش تاریخچه دو تیم منتقل می‌شود
     m_id = request.form.get('m_id')
     res = request.form.get('res_text')
     conn = get_db_connection()
@@ -981,7 +976,6 @@ def submit_result():
 
 @app.route('/coach/submit_lineup', methods=['POST'])
 def coach_submit_lineup():
-    # ۵- ثبت هوشمند ترکیب مربی شامل ۷ بازیکن با فیلتر تیم مربی یا استاندارد
     m_id = request.form.get('match_id')
     code = request.form.get('code')
     t_type = request.form.get('team_type')
@@ -997,7 +991,6 @@ def coach_submit_lineup():
 
 @app.route('/coach/submit_transfer', methods=['POST'])
 def coach_submit_transfer():
-    # ۱۰- تضمین دریافت ۱۰۰٪ پیام توافقی مربیان به دست مدیر فدراسیون
     code = request.form.get('code')
     msg = request.form.get('message')
     conn = get_db_connection()
@@ -1024,7 +1017,6 @@ def admin_create_tournament():
 
 @app.route('/coach/reg_tournament', methods=['POST'])
 def coach_reg_tournament():
-    # ۸- ثبت نام اولیه در تورنمنت و رفتن به وضعیت انتظار تایید مدیر
     code = request.form.get('code')
     t_id = request.form.get('t_id')
     conn = get_db_connection()
@@ -1039,7 +1031,6 @@ def coach_reg_tournament():
 
 @app.route('/admin/approve_reg/<reg_id>')
 def admin_approve_reg(reg_id):
-    # ۸- تایید درخواست مربی توسط ادمین
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE tournament_regs SET status='تایید شده' WHERE id=%s", (reg_id,))
@@ -1050,7 +1041,6 @@ def admin_approve_reg(reg_id):
 
 @app.route('/admin/reject_reg/<reg_id>')
 def admin_reject_reg(reg_id):
-    # ۸- رد درخواست ثبت نام مربی
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM tournament_regs WHERE id=%s", (reg_id,))
@@ -1061,7 +1051,6 @@ def admin_reject_reg(reg_id):
 
 @app.route('/admin/start_tournament/<t_id>')
 def admin_start_tournament(t_id):
-    # ۸- شروع تورنمنت و حذف مابقی فرم ثبت نام و ایجاد پنل آپلود عکس پیشرفته مدیریت جداول
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE tournaments SET status='در حال برگزاری' WHERE id=%s", (t_id,))
@@ -1073,7 +1062,6 @@ def admin_start_tournament(t_id):
 
 @app.route('/admin/upload_tour_media', methods=['POST'])
 def admin_upload_tour_media():
-    # ۸- امکان آپلود و افزودن چند عکس مستقیم با ویرگول برای جداول رده بندی، نتایج، گلزنان، پاس گل و کلین شیت
     t_id = request.form.get('t_id')
     s = request.form.get('img_stats')
     r = request.form.get('img_results')
@@ -1103,7 +1091,6 @@ def admin_add_std_league():
 
 @app.route('/admin/add_std_team', methods=['POST'])
 def admin_add_std_team():
-    # ۹- تعیین تعداد ستاره و اعتبار مورد نیاز برای استفاده در بازی استاندارد
     l_id = request.form.get('l_id')
     name = request.form.get('t_name')
     cre = request.form.get('credit_req')
@@ -1118,7 +1105,6 @@ def admin_add_std_team():
 
 @app.route('/admin/add_std_player', methods=['POST'])
 def admin_add_std_player():
-    # ۹- افزودن بازیکن به بخش جدا شده تیم استاندارد به همراه لینک کارت تفکیک شده
     t_id = request.form.get('std_t_id')
     p_name = request.form.get('p_name')
     dl = request.form.get('dl_url')
@@ -1132,7 +1118,6 @@ def admin_add_std_player():
 
 @app.route('/admin/add_product', methods=['POST'])
 def admin_add_product():
-    # ۱۱- پنل پیشرفته مدیریت آیتم‌های فروشگاه کارتی (سه مورد مجزا)
     name = request.form.get('p_name')
     p_type = request.form.get('p_type')
     price = int(request.form.get('price'))
@@ -1171,7 +1156,6 @@ def admin_delete_product(p_id):
 
 @app.route('/coach/buy_product_coins', methods=['POST'])
 def buy_product_coins():
-    # ۱۱- مورد اول: خرید قطعی با سکه (پک ها) و اعمال فوری محتویات به مربی همراه کد پیگیری
     code = request.form.get('code')
     p_id = request.form.get('p_id')
     track = "TRK" + str(random.randint(100000, 999999))
@@ -1209,7 +1193,6 @@ def buy_product_coins():
 
 @app.route('/coach/buy_product_wallet', methods=['POST'])
 def buy_product_wallet():
-    # ۱۱- مورد دوم: خرید از طریق موجودی کیف پول و چک کردن اعتبار مربی همراه با آیدی پیگیری تلگرام ادمین
     code = request.form.get('code')
     p_id = request.form.get('p_id')
     track = "TRK" + str(random.randint(100000, 999999))
@@ -1236,7 +1219,6 @@ def buy_product_wallet():
 
 @app.route('/coach/buy_product_box', methods=['POST'])
 def buy_product_box():
-    # ۱۱- مورد سوم: خرید شانسی و چرخاندن گردونه کاملاً تصادفی با رعایت شانس‌ها بدون تکرار یکنواخت برای همه تیم‌ها
     code = request.form.get('code')
     p_id = request.form.get('p_id')
     track = "TRK" + str(random.randint(100000, 999999))
@@ -1284,7 +1266,6 @@ def admin_check_order():
 
 @app.route('/admin/add_gift', methods=['POST'])
 def admin_add_gift():
-    # ۱۸- بخش تعریف کد هدیه جدید و تعیین نوع و مقدار جایزه توسط مدیر
     gc = request.form.get('g_code').strip()
     gt = request.form.get('g_type')
     gv = request.form.get('g_val').strip()
@@ -1298,7 +1279,6 @@ def admin_add_gift():
 
 @app.route('/coach/claim_gift', methods=['POST'])
 def coach_claim_gift():
-    # ۱۸- بررسی هوشمند کد هدیه و اعمال فوری هدیه روی حساب مربی
     code = request.form.get('code')
     gc = request.form.get('g_code').strip()
     
@@ -1319,7 +1299,7 @@ def coach_claim_gift():
         elif rtype == 'wallet':
             cursor.execute("UPDATE coaches SET wallet = wallet + %s WHERE login_code=%s", (rval, code))
             
-        cursor.execute("DELETE FROM gift_codes WHERE code=%s", (gc,)) # یکبار مصرف
+        cursor.execute("DELETE FROM gift_codes WHERE code=%s", (gc,))
         conn.commit()
         msg = "🎉 کد هدیه معتبر بود! جوایز با موفقیت به اکانت شما اضافه شد."
     else:
@@ -1331,7 +1311,6 @@ def coach_claim_gift():
 
 @app.route('/admin/update_permissions', methods=['POST'])
 def admin_update_permissions():
-    # ۱۴- فراهم کردن امکان قفل کردن تمام بخش‌ها و منوهای بازی به صورت مجزا
     target = request.form.get('target_acc')
     lp = 1 if request.form.get('lock_player') else 0
     lt = 1 if request.form.get('lock_team') else 0
